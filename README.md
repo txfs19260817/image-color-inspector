@@ -143,6 +143,7 @@ createRembgProcessor({
 - `app.js`: frontend pipeline (decode, optional remove-bg, quantize, export)
 - `rembg-web.js`: model registry, ORT session cache, preprocess/inference/postprocess
 - `styles.css`: styling
+- `assets/logo.svg`, `assets/favicon.svg`: project-generated logo and favicon
 
 ## License
 

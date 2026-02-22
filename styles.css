@@ -29,6 +29,18 @@ h1 {
   font-size: 32px;
 }
 
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
 header p {
   margin: 6px 0 0;
   color: var(--muted);
@@ -244,6 +256,29 @@ h2 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 8px;
+}
+
+.seo-copy {
+  margin-top: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.seo-copy h2 {
+  margin-top: 0;
+}
+
+.seo-copy h3 {
+  margin: 12px 0 8px;
+  font-size: 16px;
+}
+
+.seo-copy p {
+  margin: 8px 0;
+  color: var(--ink);
+  line-height: 1.5;
 }
 
 .palette-item {

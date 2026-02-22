@@ -3,13 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Color Inspector</title>
+  <title>Image Color Inspector - Extract Image Color Palette, HEX, CSV/ACO Export</title>
+  <meta
+    name="description"
+    content="Free browser-based image color palette extractor. Quantize images, inspect HEX by coordinate, remove background, and export palette to CSV or ACO."
+  />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://txfs19260817.github.io/image-color-inspector/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Image Color Inspector" />
+  <meta property="og:title" content="Image Color Inspector - Extract Image Color Palette" />
+  <meta
+    property="og:description"
+    content="Extract image color palettes in your browser, inspect HEX values, remove background, and export as CSV or ACO."
+  />
+  <meta property="og:url" content="https://txfs19260817.github.io/image-color-inspector/" />
+  <meta property="og:image" content="https://txfs19260817.github.io/image-color-inspector/assets/logo.svg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Image Color Inspector - Extract Image Color Palette" />
+  <meta
+    name="twitter:description"
+    content="Browser-based image palette extractor with HEX inspector, optional background removal, and CSV/ACO export."
+  />
+  <meta name="twitter:image" content="https://txfs19260817.github.io/image-color-inspector/assets/logo.svg" />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="apple-touch-icon" href="./assets/logo.svg" />
   <link rel="stylesheet" href="styles.css" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Image Color Inspector",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Web",
+      "url": "https://txfs19260817.github.io/image-color-inspector/",
+      "image": "https://txfs19260817.github.io/image-color-inspector/assets/logo.svg",
+      "description": "Browser-based image color palette extractor with HEX coordinate inspection, optional background removal, and CSV/ACO export.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+  </script>
 </head>
 <body>
   <main class="app">
     <header>
-      <h1>Image Color Inspector</h1>
+      <div class="brand-row">
+        <img class="brand-logo" src="./assets/logo.svg" alt="Image Color Inspector logo" />
+        <h1>Image Color Inspector</h1>
+      </div>
       <p>Quantize image to N colors and inspect HEX by hover coordinate.</p>
     </header>
 
@@ -102,6 +146,28 @@
     <section>
       <h2>Palette</h2>
       <div id="paletteList" class="palette-list"></div>
+    </section>
+
+    <section class="seo-copy" aria-label="About this tool">
+      <h2>About This Tool</h2>
+      <p>
+        Image Color Inspector is a free online image color palette extractor that runs fully in your browser.
+        You can upload an image, reduce it to N representative colors, inspect HEX values by pixel coordinate,
+        and export the palette as CSV or Adobe ACO.
+      </p>
+      <p>
+        The app also supports optional background removal before quantization, with model selection and threshold
+        control for better foreground-focused palettes.
+      </p>
+      <h3>FAQ</h3>
+      <p>
+        Q: Can I use it for transparent PNGs? A: Yes. Transparent regions are ignored during quantization so
+        foreground colors remain dominant.
+      </p>
+      <p>
+        Q: Does it upload images to a backend? A: No dedicated backend is required for processing; it is
+        frontend-first and runs inference in-browser.
+      </p>
     </section>
 
     <footer class="app-footer">
