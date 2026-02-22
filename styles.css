@@ -34,6 +34,18 @@ header p {
   color: var(--muted);
 }
 
+.repo-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.repo-link:hover {
+  text-decoration: underline;
+}
+
 .controls {
   margin-top: 18px;
   display: flex;
