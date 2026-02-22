@@ -26,14 +26,14 @@ export const REMBG_MODELS = [
   { name: "silueta", label: "silueta", inputSize: 320, fileName: "silueta.onnx", description: "U2Net-like model with much smaller size (~43MB)." },
   { name: "isnet-general-use", label: "isnet-general-use", inputSize: 1024, fileName: "isnet-general-use.onnx", applySigmoid: true, description: "ISNet model for high-quality general use." },
   { name: "isnet-anime", label: "isnet-anime", inputSize: 1024, fileName: "isnet-anime.onnx", description: "High-accuracy model for anime-style characters." },
-  { name: "birefnet-general", label: "birefnet-general", inputSize: 1024, fileName: "BiRefNet-general-epoch_244.onnx", altFileNames: ["birefnet-general.onnx"], applySigmoid: true, description: "BiRefNet model for general use." },
-  { name: "birefnet-general-lite", label: "birefnet-general-lite", inputSize: 1024, fileName: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", altFileNames: ["birefnet-general-lite.onnx"], applySigmoid: true, description: "Lightweight BiRefNet model for general use." },
-  { name: "birefnet-portrait", label: "birefnet-portrait", inputSize: 1024, fileName: "BiRefNet-portrait-epoch_150.onnx", altFileNames: ["birefnet-portrait.onnx"], applySigmoid: true, description: "BiRefNet model tailored for portraits." },
-  { name: "birefnet-dis", label: "birefnet-dis", inputSize: 1024, fileName: "BiRefNet-DIS-epoch_590.onnx", altFileNames: ["birefnet-dis.onnx"], applySigmoid: true, description: "BiRefNet model for dichotomous image segmentation (DIS)." },
-  { name: "birefnet-hrsod", label: "birefnet-hrsod", inputSize: 1024, fileName: "BiRefNet-HRSOD_DHU-epoch_115.onnx", altFileNames: ["birefnet-hrsod.onnx"], applySigmoid: true, description: "BiRefNet model for high-resolution salient object detection (HRSOD)." },
-  { name: "birefnet-cod", label: "birefnet-cod", inputSize: 1024, fileName: "BiRefNet-COD-epoch_125.onnx", altFileNames: ["birefnet-cod.onnx"], applySigmoid: true, description: "BiRefNet model for concealed object detection (COD)." },
-  { name: "birefnet-massive", label: "birefnet-massive", inputSize: 1024, fileName: "BiRefNet-massive-TR_DIS5K_TR_TEs-epoch_420.onnx", altFileNames: ["birefnet-massive.onnx"], applySigmoid: true, description: "BiRefNet model trained on a massive dataset." },
-  { name: "bria-rmbg", label: "bria-rmbg", inputSize: 1024, fileName: "bria-rmbg-2.0.onnx", altFileNames: ["model.onnx", "bria-rmbg.onnx"], mean: [0.5, 0.5, 0.5], std: [1.0, 1.0, 1.0], description: "State-of-the-art background removal model by BRIA AI." },
+  { name: "birefnet-general", label: "birefnet-general", inputSize: 1024, fileName: "BiRefNet-general-epoch_244.onnx", altFileNames: ["birefnet-general.onnx"], applySigmoid: true, allowWebGpu: false, description: "BiRefNet model for general use." },
+  { name: "birefnet-general-lite", label: "birefnet-general-lite", inputSize: 1024, fileName: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", altFileNames: ["birefnet-general-lite.onnx"], applySigmoid: true, allowWebGpu: false, description: "Lightweight BiRefNet model for general use." },
+  { name: "birefnet-portrait", label: "birefnet-portrait", inputSize: 1024, fileName: "BiRefNet-portrait-epoch_150.onnx", altFileNames: ["birefnet-portrait.onnx"], applySigmoid: true, allowWebGpu: false, description: "BiRefNet model tailored for portraits." },
+  { name: "birefnet-dis", label: "birefnet-dis", inputSize: 1024, fileName: "BiRefNet-DIS-epoch_590.onnx", altFileNames: ["birefnet-dis.onnx"], applySigmoid: true, allowWebGpu: false, description: "BiRefNet model for dichotomous image segmentation (DIS)." },
+  { name: "birefnet-hrsod", label: "birefnet-hrsod", inputSize: 1024, fileName: "BiRefNet-HRSOD_DHU-epoch_115.onnx", altFileNames: ["birefnet-hrsod.onnx"], applySigmoid: true, allowWebGpu: false, description: "BiRefNet model for high-resolution salient object detection (HRSOD)." },
+  { name: "birefnet-cod", label: "birefnet-cod", inputSize: 1024, fileName: "BiRefNet-COD-epoch_125.onnx", altFileNames: ["birefnet-cod.onnx"], applySigmoid: true, allowWebGpu: false, description: "BiRefNet model for concealed object detection (COD)." },
+  { name: "birefnet-massive", label: "birefnet-massive", inputSize: 1024, fileName: "BiRefNet-massive-TR_DIS5K_TR_TEs-epoch_420.onnx", altFileNames: ["birefnet-massive.onnx"], applySigmoid: true, allowWebGpu: false, description: "BiRefNet model trained on a massive dataset." },
+  { name: "bria-rmbg", label: "bria-rmbg", inputSize: 1024, fileName: "bria-rmbg-2.0.onnx", altFileNames: ["model.onnx", "bria-rmbg.onnx"], mean: [0.5, 0.5, 0.5], std: [1.0, 1.0, 1.0], allowWebGpu: false, description: "State-of-the-art background removal model by BRIA AI." },
   // SAM needs two ONNX files (encoder + decoder) and dedicated prompt flow.
   // This web pipeline currently supports single-model segmentation sessions only.
 ];
@@ -383,6 +383,7 @@ class RembgWebProcessor {
       mean: config.mean || DEFAULT_MEAN,
       std: config.std || DEFAULT_STD,
       applySigmoid: Boolean(config.applySigmoid),
+      allowWebGpu: config.allowWebGpu !== false,
       candidateUrls,
     };
   }
@@ -399,10 +400,10 @@ class RembgWebProcessor {
     ortConfigured = true;
   }
 
-  async createSessionFromUrl(modelName, modelUrl) {
+  async createSessionFromUrl(modelName, modelUrl, allowWebGpu = true) {
     this.configureOrt();
 
-    if (hasWebGpuSupport()) {
+    if (allowWebGpu && hasWebGpuSupport()) {
       try {
         const session = await ort.InferenceSession.create(modelUrl, {
           executionProviders: ["webgpu"],
@@ -436,11 +437,12 @@ class RembgWebProcessor {
   }
 
   async createSession(modelName, modelUrls) {
+    const model = this.getModelConfig(modelName);
     let lastError = null;
 
     for (const modelUrl of modelUrls) {
       try {
-        const session = await this.createSessionFromUrl(modelName, modelUrl);
+        const session = await this.createSessionFromUrl(modelName, modelUrl, model.allowWebGpu);
         this.selectedSourceByModel.set(modelName, modelUrl);
         return session;
       } catch (error) {

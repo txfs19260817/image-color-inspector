@@ -58,6 +58,8 @@ Code location: `rembg-web.js`
 - `DEFAULT_MODEL_URL_OVERRIDES`
 - `REMBG_MODELS`
 
+`REMBG_MODELS` supports `allowWebGpu: false` to skip WebGPU and use WASM directly for unstable models.
+
 Put ONNX files under `models/` using these exact filenames:
 
 - `u2net.onnx`
