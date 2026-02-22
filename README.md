@@ -143,3 +143,7 @@ createRembgProcessor({
 - `app.js`: frontend pipeline (decode, optional remove-bg, quantize, export)
 - `rembg-web.js`: model registry, ORT session cache, preprocess/inference/postprocess
 - `styles.css`: styling
+
+## License
+
+WTFPL (see `LICENSE`).

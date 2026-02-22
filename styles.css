@@ -227,6 +227,19 @@ h2 {
   margin: 18px 0 10px;
 }
 
+.app-footer {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
 .palette-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
