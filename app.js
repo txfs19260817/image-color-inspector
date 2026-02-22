@@ -11,6 +11,7 @@ const exportFormatSelect = document.getElementById("exportFormatSelect");
 const processButton = document.getElementById("processButton");
 const exportButton = document.getElementById("exportButton");
 const statusText = document.getElementById("statusText");
+const hoverInfo = document.getElementById("hoverInfo");
 const hoverSwatch = document.getElementById("hoverSwatch");
 const hoverHex = document.getElementById("hoverHex");
 const hoverCoord = document.getElementById("hoverCoord");
@@ -721,6 +722,15 @@ quantizedCanvas.addEventListener("mouseleave", () => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape" || !state.pinnedHover) {
+    return;
+  }
+  clearPinnedHover();
+  clearHoverInfo();
+  clearActivePalette();
+});
+
+hoverInfo.addEventListener("click", () => {
+  if (!state.pinnedHover) {
     return;
   }
   clearPinnedHover();

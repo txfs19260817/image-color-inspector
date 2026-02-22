@@ -1,8 +1,20 @@
 const DEFAULT_MODEL_BASE_URL = "https://huggingface.co/tomjackson2023/rembg/resolve/main";
 const DEFAULT_MODEL_BASE_URL_FALLBACKS = [
-  "https://github.com/danielgatis/rembg/releases/download/v0.0.0",
   "./models",
 ];
+const DEFAULT_MODEL_URL_OVERRIDES = {
+  "birefnet-general": "https://huggingface.co/onnx-community/BiRefNet-ONNX/resolve/main/onnx/model.onnx",
+  "birefnet-general-lite": "https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model.onnx",
+  "birefnet-portrait": "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX/resolve/main/onnx/model.onnx",
+  "birefnet-dis": "https://huggingface.co/onnx-community/BiRefNet-DIS5K-ONNX/resolve/main/onnx/model.onnx",
+  "birefnet-hrsod": "https://huggingface.co/onnx-community/BiRefNet-HRSOD_DHU-ONNX/resolve/main/onnx/model.onnx",
+  "birefnet-cod": "https://huggingface.co/onnx-community/BiRefNet-COD-ONNX/resolve/main/onnx/model.onnx",
+  "birefnet-massive": "https://huggingface.co/onnx-community/BiRefNet-DIS5K-TR_TEs-ONNX/resolve/main/onnx/model.onnx",
+  "bria-rmbg": [
+    "https://huggingface.co/webnn/RMBG-2.0/resolve/main/onnx/model_q4f16.onnx",
+    "https://huggingface.co/webnn/RMBG-2.0/resolve/main/onnx/model.onnx",
+  ],
+};
 const DEFAULT_MEAN = [0.485, 0.456, 0.406];
 const DEFAULT_STD = [0.229, 0.224, 0.225];
 
@@ -65,6 +77,10 @@ function normalizeFileNameList(value) {
 
 function hasWebGpuSupport() {
   return typeof navigator !== "undefined" && "gpu" in navigator;
+}
+
+function isRemoteBaseUrl(url) {
+  return /^https?:\/\//i.test(String(url || ""));
 }
 
 function isLikelyOutOfMemoryError(error) {
@@ -311,7 +327,10 @@ class RembgWebProcessor {
     this.modelBaseUrlFallbacks = Array.isArray(options.modelBaseUrlFallbacks)
       ? options.modelBaseUrlFallbacks
       : DEFAULT_MODEL_BASE_URL_FALLBACKS;
-    this.modelUrlOverrides = options.modelUrlOverrides || {};
+    this.modelUrlOverrides = {
+      ...DEFAULT_MODEL_URL_OVERRIDES,
+      ...(options.modelUrlOverrides || {}),
+    };
     this.sessionCache = new Map();
     this.selectedProviderByModel = new Map();
     this.selectedSourceByModel = new Map();
@@ -331,6 +350,8 @@ class RembgWebProcessor {
     const overrideUrls = normalizeUrlList(this.modelUrlOverrides[modelName]);
     const modelFileNames = [config.fileName, ...normalizeFileNameList(config.altFileNames)]
       .filter((item, index, arr) => typeof item === "string" && item.trim() && arr.indexOf(item) === index);
+    const localFileNames = modelFileNames;
+    const remoteFileNames = [config.fileName].filter(Boolean);
     const candidateUrls = [];
     const seen = new Set();
 
@@ -347,7 +368,8 @@ class RembgWebProcessor {
       if (typeof base !== "string" || !base.trim()) {
         continue;
       }
-      for (const fileName of modelFileNames) {
+      const fileNames = isRemoteBaseUrl(base) ? remoteFileNames : localFileNames;
+      for (const fileName of fileNames) {
         const modelUrl = maybeAppendHfDownload(joinUrl(base, fileName));
         if (!seen.has(modelUrl)) {
           candidateUrls.push(modelUrl);
