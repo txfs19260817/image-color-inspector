@@ -7,6 +7,7 @@ const maxSideInput = document.getElementById("maxSideInput");
 const removeBgCheckbox = document.getElementById("removeBgCheckbox");
 const rembgModelSelect = document.getElementById("rembgModelSelect");
 const rembgModelDescription = document.getElementById("rembgModelDescription");
+const rembgThresholdInput = document.getElementById("rembgThresholdInput");
 const exportFormatSelect = document.getElementById("exportFormatSelect");
 const processButton = document.getElementById("processButton");
 const exportButton = document.getElementById("exportButton");
@@ -67,6 +68,13 @@ function clampInt(value, min, max) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
+function clampFloat(value, min, max) {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+  return Math.max(min, Math.min(max, value));
+}
+
 function rgbToHex(r, g, b) {
   return `#${r.toString(16).padStart(2, "0").toUpperCase()}${g.toString(16).padStart(2, "0").toUpperCase()}${b.toString(16).padStart(2, "0").toUpperCase()}`;
 }
@@ -84,7 +92,7 @@ function clearQuantizationResult() {
   state.sortedPalette = [];
   state.width = 0;
   state.height = 0;
-  state.pinnedHover = null;
+  clearPinnedHover();
   paletteList.innerHTML = "";
   exportButton.disabled = true;
   quantizedCtx.clearRect(0, 0, quantizedCanvas.width, quantizedCanvas.height);
@@ -562,9 +570,11 @@ async function processImage() {
   const maxSide = clampInt(Number(maxSideInput.value) || 800, 128, 2048);
   const removeBg = Boolean(removeBgCheckbox.checked);
   const selectedModel = rembgModelSelect.value || "u2net";
+  const threshold = clampFloat(Number(rembgThresholdInput.value), 0, 1);
 
   colorCountInput.value = String(k);
   maxSideInput.value = String(maxSide);
+  rembgThresholdInput.value = String(threshold);
 
   processButton.disabled = true;
   exportButton.disabled = true;
@@ -581,6 +591,7 @@ async function processImage() {
       setStatus(`Removing background with ${selectedModel}...`);
       const result = await rembg.removeBackground(bitmap, {
         model: selectedModel,
+        threshold,
         output: "cutout",
       });
       processedImageData = result.imageData;
@@ -672,6 +683,7 @@ function updateSelectedModelDescription() {
 
 function syncRembgControls() {
   rembgModelSelect.disabled = !removeBgCheckbox.checked;
+  rembgThresholdInput.disabled = !removeBgCheckbox.checked;
   updateSelectedModelDescription();
 }
 
@@ -720,15 +732,6 @@ quantizedCanvas.addEventListener("mouseleave", () => {
   clearActivePalette();
 });
 
-document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape" || !state.pinnedHover) {
-    return;
-  }
-  clearPinnedHover();
-  clearHoverInfo();
-  clearActivePalette();
-});
-
 hoverInfo.addEventListener("click", () => {
   if (!state.pinnedHover) {
     return;
@@ -742,6 +745,10 @@ processButton.addEventListener("click", processImage);
 exportButton.addEventListener("click", exportPalette);
 removeBgCheckbox.addEventListener("change", syncRembgControls);
 rembgModelSelect.addEventListener("change", updateSelectedModelDescription);
+rembgThresholdInput.addEventListener("change", () => {
+  const threshold = clampFloat(Number(rembgThresholdInput.value), 0, 1);
+  rembgThresholdInput.value = String(threshold);
+});
 
 imageInput.addEventListener("change", async () => {
   clearQuantizationResult();

@@ -49,13 +49,35 @@ header p {
 .controls {
   margin-top: 18px;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
-  align-items: end;
+  align-items: stretch;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px;
+}
+
+.control-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffefb;
+}
+
+.group-title {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.rembg-group {
+  background: #f8fbfd;
 }
 
 .control {
@@ -127,6 +149,12 @@ button.secondary {
 button[disabled] {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .status-row {
