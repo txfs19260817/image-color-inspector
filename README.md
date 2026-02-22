@@ -1,117 +1,139 @@
-# Image Color Inspector
+# Image Color Inspector (Frontend-Only)
 
 Local web app that:
 - Quantizes an image to `N` colors (default `N=32`)
-- Shows full palette with pixel count and percentage
+- Shows palette with pixel count and percentage
 - Displays `HEX + (x,y) + count` on hover
-- Exports palette as CSV
-- Exports palette as ACO (`.aco`)
-- Optional background removal before quantization (checkbox in UI)
+- Exports palette as CSV or ACO
+- Optionally removes background in-browser via ONNX Runtime Web (`WebGPU` first, `WASM` fallback)
 
-## Run (with remove-bg feature)
+## What Changed
+
+- Backend API (`/api/process-image`, `/api/export`) is no longer used.
+- `rembg` inference now runs in browser with `onnxruntime-web`.
+- Quantization and export logic are now pure frontend JavaScript.
+- Added rembg model selector in UI:
+  - `u2net`
+  - `u2netp`
+  - `u2net_human_seg`
+  - `u2net_cloth_seg`
+  - `silueta`
+  - `isnet-general-use`
+  - `isnet-anime`
+  - `birefnet-general`
+  - `birefnet-general-lite`
+  - `birefnet-portrait`
+  - `birefnet-dis`
+  - `birefnet-hrsod`
+  - `birefnet-cod`
+  - `birefnet-massive`
+  - `bria-rmbg`
+
+## Run
+
+Any static server works.
 
 ```powershell
 cd D:\Projects\image-color-inspector
-uv python install 3.13
-uv sync --python 3.13
-uv run python server.py
+python -m http.server 5000
 ```
 
-Open `http://127.0.0.1:5000`.
+Open: `http://127.0.0.1:5000`
 
-## Architecture (single-stack business logic)
-- Business logic is now unified in Python/FastAPI (`server.py`):
-- Image resize + K-Means quantization
-- Palette statistics and indexed pixel map
-- CSV export and ACO export
-- Optional remove-bg preprocessing via `rembg`
-- Frontend `app.js` only handles UI interaction/rendering and API requests.
+## Model Hosting
 
-## Notes
-- First `rembg` run may download model files, so initial remove-bg call can be slower.
-- This project uses `rembg[gpu]` and targets Python `3.13.x`.
-- Runtime compatibility pins: `numpy>=1.23,<3` and `pillow>=12.1,<13`.
-- Ensure your CUDA/cuDNN runtime and GPU driver are compatible with `onnxruntime-gpu`.
-- Quantization endpoint is `POST /api/process-image`; set `remove_bg=true` to remove background first.
-- Large images are resized by `Max Side` before quantization for speed.
-- Quantization uses K-Means plus unique-color nearest assignment in Python.
+Default model source order is:
 
-## API
-### `GET /health`
-- Purpose: liveness check.
-- Response: `{"ok": true}`.
+1. CDN primary: `https://huggingface.co/tomjackson2023/rembg/resolve/main/{fileName}?download=true`
+2. CDN fallback: `https://github.com/danielgatis/rembg/releases/download/v0.0.0/{fileName}`
+3. Local fallback: `./models/{fileName}`
 
-### `POST /api/process-image`
-- Content-Type: `multipart/form-data`.
-- Fields:
-- `image` (required): input image file.
-- `color_count` (optional): integer in `[2, 128]`, default `32`.
-- `max_side` (optional): integer in `[128, 2048]`, default `800`.
-- `remove_bg` (optional): bool-like string (`1|true|yes|on`), default `false`.
-- Response JSON:
-- `width`, `height`: processed image size.
-- `palette`: full palette stats by centroid index.
-- `sorted_palette`: same palette sorted by pixel count descending.
-- `indexed_pixels_b64`: base64 of little-endian `uint16` index map.
-- `quantized_png_b64`: base64 PNG of quantized image.
+Code location: `rembg-web.js`
 
-### `POST /api/export`
-- Content-Type: `application/json`.
-- Body:
-- `file_name` (optional): source name for output filename.
-- `format` (optional): `"csv"` or `"aco"`; default `"csv"`.
-- `palette` (required): non-empty palette array.
-- Response:
-- CSV export returns a downloadable `.csv`.
-- ACO export returns a downloadable `.aco`.
+- `DEFAULT_MODEL_BASE_URL`
+- `DEFAULT_MODEL_BASE_URL_FALLBACKS`
+- `REMBG_MODELS`
 
-## How ACO export works
-ACO is Adobe's binary swatch format (used by Photoshop and many compatible tools).  
-In this project, export is implemented in Python `server.py` (`build_aco_bytes()` and unified `/api/export`).
+Put ONNX files under `models/` using these exact filenames:
 
-1. File layout:
-- The server writes both ACO v1 and v2 blocks in one file.
-- v1 improves compatibility with older readers.
-- v2 carries swatch names.
+- `u2net.onnx`
+- `u2netp.onnx`
+- `u2net_human_seg.onnx`
+- `u2net_cloth_seg.onnx`
+- `silueta.onnx`
+- `isnet-general-use.onnx`
+- `isnet-anime.onnx`
+- `BiRefNet-general-epoch_244.onnx`
+- `BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx`
+- `BiRefNet-portrait-epoch_150.onnx`
+- `BiRefNet-DIS-epoch_590.onnx`
+- `BiRefNet-HRSOD_DHU-epoch_115.onnx`
+- `BiRefNet-COD-epoch_125.onnx`
+- `BiRefNet-massive-TR_DIS5K_TR_TEs-epoch_420.onnx`
+- `bria-rmbg-2.0.onnx`
 
-2. Byte order:
-- All numeric fields are written as big-endian (`struct.pack(">H")` / `struct.pack(">I")`).
+Note: `sam` in rembg requires two model files (`sam_vit_b_01ec64.encoder.onnx` and `sam_vit_b_01ec64.decoder.onnx`) and a different inference flow, so it is not included in this single-session web pipeline.
 
-3. Color record format:
-- Each color record is 10 bytes:
-- `colorSpace` (2 bytes), then 4 channel values (each 2 bytes).
-- For RGB records, `colorSpace = 0`.
-- Channels are stored as 16-bit values, so 8-bit `R/G/B` are converted with `value * 257` (`0..255 -> 0..65535`).
+Compatibility note: this app also accepts common local aliases for BiRefNet/BRIA files, e.g. `birefnet-portrait.onnx` and `model.onnx`.
 
-4. v2 swatch names:
-- For each swatch, the server writes a Unicode name like `Color 1 #AABBCC`.
-- Name encoding is UTF-16BE with:
-- a 32-bit character count (including trailing null),
-- followed by characters,
-- then a null terminator.
+### Model File Map (CDN / GitHub Release)
 
-5. Export content:
-- The exported palette source is `state.sortedPalette`, so colors are written in descending pixel frequency order.
-- Output filename pattern: `<image_name>_N<color_count>.aco`.
+All rows below map to:
+- HF CDN: `https://huggingface.co/tomjackson2023/rembg/resolve/main/{fileName}?download=true`
+- GitHub Release: `https://github.com/danielgatis/rembg/releases/download/v0.0.0/{fileName}`
 
-## How K-Means is used here
-1. Collect pixel samples:
-The server reads RGB pixels from the current image (original or remove-bg result). To keep speed stable on large images, it samples up to about 12k pixels.
+| Model key | CDN fileName | GitHub release fileName | Local aliases accepted |
+|---|---|---|---|
+| `u2net` | `u2net.onnx` | `u2net.onnx` | - |
+| `u2netp` | `u2netp.onnx` | `u2netp.onnx` | - |
+| `u2net_human_seg` | `u2net_human_seg.onnx` | `u2net_human_seg.onnx` | - |
+| `u2net_cloth_seg` | `u2net_cloth_seg.onnx` | `u2net_cloth_seg.onnx` | - |
+| `silueta` | `silueta.onnx` | `silueta.onnx` | - |
+| `isnet-general-use` | `isnet-general-use.onnx` | `isnet-general-use.onnx` | - |
+| `isnet-anime` | `isnet-anime.onnx` | `isnet-anime.onnx` | - |
+| `birefnet-general` | `BiRefNet-general-epoch_244.onnx` | `BiRefNet-general-epoch_244.onnx` | `birefnet-general.onnx` |
+| `birefnet-general-lite` | `BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx` | `BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx` | `birefnet-general-lite.onnx` |
+| `birefnet-portrait` | `BiRefNet-portrait-epoch_150.onnx` | `BiRefNet-portrait-epoch_150.onnx` | `birefnet-portrait.onnx` |
+| `birefnet-dis` | `BiRefNet-DIS-epoch_590.onnx` | `BiRefNet-DIS-epoch_590.onnx` | `birefnet-dis.onnx` |
+| `birefnet-hrsod` | `BiRefNet-HRSOD_DHU-epoch_115.onnx` | `BiRefNet-HRSOD_DHU-epoch_115.onnx` | `birefnet-hrsod.onnx` |
+| `birefnet-cod` | `BiRefNet-COD-epoch_125.onnx` | `BiRefNet-COD-epoch_125.onnx` | `birefnet-cod.onnx` |
+| `birefnet-massive` | `BiRefNet-massive-TR_DIS5K_TR_TEs-epoch_420.onnx` | `BiRefNet-massive-TR_DIS5K_TR_TEs-epoch_420.onnx` | `birefnet-massive.onnx` |
+| `bria-rmbg` | `bria-rmbg-2.0.onnx` | `bria-rmbg-2.0.onnx` | `model.onnx`, `bria-rmbg.onnx` |
 
-2. Initialize `K` centroids:
-`K` is your `Colors (N)` setting. The server picks an initial color, then keeps adding centroid candidates that are far from existing centroids so starting points are spread out.
+You can customize fallback chain:
 
-3. Iterate assignment/update:
-For each iteration, every sample is assigned to its nearest centroid (Euclidean distance in RGB space), then each centroid is recomputed as the mean RGB of samples assigned to it.
+```js
+createRembgProcessor({
+  modelBaseUrl: "./models",
+  modelBaseUrlFallbacks: [
+    "https://your-cdn.example.com/rembg",
+    "https://huggingface.co/tomjackson2023/rembg/resolve/main",
+  ],
+  modelUrlOverrides: {
+    u2net: [
+      "https://priority-cdn.example.com/rembg/u2net.onnx",
+      "https://backup-cdn.example.com/rembg/u2net.onnx",
+    ],
+  },
+});
+```
 
-4. Quantize every pixel:
-After centroids stabilize, each image pixel is mapped to its nearest centroid, producing the quantized image.  
-The server computes nearest assignments over unique colors, then expands back to all pixels.
+## Runtime Notes
 
-5. Build palette stats:
-Each centroid becomes one palette color (`#RRGGBB`), and the server counts how many pixels map to it to compute pixel count and percentage.
+- WebGPU is attempted first when available.
+- If WebGPU session creation fails, it falls back to WASM automatically.
+- `onnxruntime-web` is loaded from CDN in `index.html`.
+- First inference per model is slower because model download + session init happens in browser.
 
-## References
-- Adobe Photoshop File Formats Specification: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
-- Larry Tesler ACO notes: https://www.nomodes.com/larry-tesler-personal/aco
-- ACO/ASE engineering reference implementation: https://github.com/behreajj/AsepriteSwatchExchange
+## Troubleshooting
+
+- Error: `failed to allocate a buffer of size ...` while loading a model  
+  This means browser memory is not enough for that ONNX model (common with very large BiRefNet checkpoints).  
+  Use a lighter model in this app: `u2netp`, `u2net`, `isnet-general-use`, or `birefnet-general-lite`.
+
+## Files
+
+- `index.html`: UI + model selector + ORT script
+- `app.js`: frontend pipeline (decode, optional remove-bg, quantize, export)
+- `rembg-web.js`: model registry, ORT session cache, preprocess/inference/postprocess
+- `styles.css`: styling

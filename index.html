@@ -45,6 +45,12 @@
       </label>
 
       <label class="control">
+        <span>Rembg Model</span>
+        <select id="rembgModelSelect"></select>
+        <small id="rembgModelDescription" class="control-hint">General-purpose pre-trained model.</small>
+      </label>
+
+      <label class="control">
         <span>Export Format</span>
         <select id="exportFormatSelect">
           <option value="csv" selected>CSV</option>
@@ -83,6 +89,7 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js" crossorigin="anonymous"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
