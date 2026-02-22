@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Color Inspector</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Image Color Inspector</h1>
+      <p>Quantize image to N colors and inspect HEX by hover coordinate.</p>
+    </header>
+
+    <section class="controls">
+      <label class="control">
+        <span>Image</span>
+        <input id="imageInput" type="file" accept="image/*" />
+      </label>
+
+      <label class="control">
+        <span>Colors (N)</span>
+        <input id="colorCountInput" type="number" min="2" max="128" value="32" />
+      </label>
+
+      <label class="control">
+        <span>Max Side(px)</span>
+        <select id="maxSideInput">
+          <option value="512">512</option>
+          <option value="800" selected>800</option>
+          <option value="1024">1024</option>
+          <option value="1280">1280</option>
+          <option value="1600">1600</option>
+          <option value="2048">2048</option>
+        </select>
+      </label>
+
+      <label class="control">
+        <span>Preprocess</span>
+        <div class="checkbox-inline">
+          <input id="removeBgCheckbox" type="checkbox" />
+          <span class="checkbox-label">Remove BG before quantize</span>
+        </div>
+      </label>
+
+      <label class="control">
+        <span>Export Format</span>
+        <select id="exportFormatSelect">
+          <option value="csv" selected>CSV</option>
+          <option value="aco">ACO</option>
+        </select>
+      </label>
+
+      <button id="processButton" type="button">Process</button>
+      <button id="exportButton" type="button" disabled>Export Palette</button>
+    </section>
+
+    <section class="status-row">
+      <div id="statusText" class="status">Select an image and click Process.</div>
+      <div id="hoverInfo" class="hover-info">
+        <span id="hoverSwatch" class="swatch"></span>
+        <span id="hoverHex">HEX: -</span>
+        <span id="hoverCoord">(x, y): -</span>
+        <span id="hoverCount">count: -</span>
+      </div>
+    </section>
+
+    <section class="canvas-grid">
+      <figure>
+        <figcaption>Original (scaled preview)</figcaption>
+        <canvas id="originalCanvas"></canvas>
+      </figure>
+      <figure>
+        <figcaption>Quantized</figcaption>
+        <canvas id="quantizedCanvas"></canvas>
+      </figure>
+    </section>
+
+    <section>
+      <h2>Palette</h2>
+      <div id="paletteList" class="palette-list"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
